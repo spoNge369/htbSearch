@@ -23,7 +23,7 @@ sudo cp htbSearch /usr/local/bin/
 - -I | -i, --IP IP<br>
 	Direccion IP de la maquina
 
-- -s | --status retired o active<br>
+- -s    retired o active<br>
 	Estado de las maquinas( solo existen 2 valores: `retired o active`)
 
 - -f | --flag name_machine FLAG<br>
