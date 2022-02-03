@@ -1,0 +1,387 @@
+#!/usr/bin/env perl
+# Intelligent machine search (HTB) through regular expressions -- 2021-Dec-21 spoNge369
+
+use Mojo::Base -strict; #use warnings; use strict; use utf8; use 5.10; 
+use Encode qw(encode);
+use Mojo::JSON qw(decode_json);
+use Mojo::UserAgent;
+use Getopt::Long;
+use Term::ANSIColor;
+use Text::SimpleTable;
+use Pod::Usage;
+
+binmode(STDOUT, "encoding( UTF-8 )");
+
+
+my $man = 0;
+my $help = 0;
+my $IP_machine = '';
+my $name_machine = '';
+my $os_machine = '';
+my $level = '';
+my $status = '';
+my @flag;
+my $COLOR = '';
+my $reset_machine = '';
+my $deploy_machine = '';
+my $stop_machine = '';
+my $extend_machine = '';
+
+GetOptions ( 'extend=s' => \$extend_machine, 'stop=s' => \$stop_machine, 'spawn=s' => \$deploy_machine,'reset=s' => \$reset_machine, 'c|color=s' => \$COLOR ,'man' => \$man ,'help|?' => \$help ,'flag=s{2}' => \@flag, 's=s' => \$status , 'difficulty=s' => \$level,'os=s' => \$os_machine, 'Ip=s' => \$IP_machine, 'name=s' => \$name_machine ) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitval => 0, -verbose => 2) if $man;
+
+$COLOR = 'bold black' unless $COLOR;
+
+#--------------------------------------------------------------------------------------------------
+pod2usage(1) if ( $name_machine and ( $IP_machine or $os_machine or $level or $status ) );
+pod2usage(1) if ( $IP_machine and ( $name_machine or $os_machine or $level or $status ) );
+pod2usage(1) unless ( $IP_machine or $name_machine or $os_machine or $level or $status or @flag or $reset_machine or $deploy_machine or $stop_machine or $extend_machine);
+#--------------------------------------------------------------------------------------------------
+
+#User-Agent
+my $ua = Mojo::UserAgent->new->max_redirects(3);
+$ua->transactor->name( 'htbSearch v1' );
+
+# Variables globales
+my $TOKEN = ""; #token old HTB
+$TOKEN eq '' and die 'add TOKEN in the code: my $TOKEN = "<ADD-HERE-TOKEN>" ';
+
+my $url = "https://hackthebox.eu/api/machines/get/all?api_token=$TOKEN";
+my $tx = $ua->get( $url ); #GET request
+
+
+unless ( $tx->result->is_success ) { die "There was a problem\n" }
+
+
+sub list_machine {
+
+	my $t1 = Text::SimpleTable->new( 19,13,10,10,10,10,10,10,10,10 ); 
+	$t1->row( '[ID] Machines', 'IP', 'Difficulty', 'OS', 'Free', 'Retired', 'Rating', 'User owns', 'Root owns', 'Points' );
+
+	foreach my $point ( $tx->result->json->@* ) { 
+	
+
+		my $rating = $point->{rating};
+		my $user_owns = $point->{user_owns};
+		my $root_owns = $point->{root_owns};
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+		my $IP = $point->{ip};
+		my $retired = $point->{retired}->$* ? 'Yes' : 'No';
+		my $free = $point->{free}->$* ? 'Yes' : 'No';
+		my $OS = $point->{os};
+		my $Points = $point->{points};
+		my %niveles_hash = qw( Easy 20 Medium 30 Hard 40 Insane 50 );	#my $niveles_hash = { Easy => 20, Medium => 30, Hard => 40, Insane => 50 };
+		my $Points_To_lvl = { 20 => 'Easy', 30 => 'Medium', 40 => 'Hard', 50 => 'Insane' };
+		my $Binario_retired = { Yes => 'Retired', No => 'Active' };
+		my $Binario_active = { Yes => 'Active', No => 'Retired' };
+		
+
+
+		if ( $name_machine ne '' and $machine=~/$name_machine/gi ) {
+
+			$t1->hr;
+			$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+			
+					
+		}
+		
+		if ( $IP_machine ne '' and $IP=~/$IP_machine/gi ) {
+			
+			$t1->hr;
+			$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+							   #$Points_To_lvl->{$Points}		
+		}
+	
+	
+		#status = active or retired
+		if ( $status ne '' ) {
+				
+			if ( $level eq '' and $os_machine eq '' ) {
+
+					if ( $Binario_retired->{$retired}=~/$status/gi || $Binario_active->{$free}=~/$status/gi ) {
+						$t1->hr;
+						$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+					}
+
+			} elsif ( $os_machine eq '' and $level ne '' )  {
+
+				if (  $Binario_retired->{$retired}=~/$status/gi || $Binario_active->{$free}=~/$status/gi and $Points_To_lvl->{$Points}=~/$level/gi ) {
+
+				$t1->hr;
+				$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+
+			}
+
+			} elsif ( $level eq '' and $os_machine ne '' ) {   
+
+				if ( $Binario_retired->{$retired}=~/$status/gi || $Binario_active->{$free}=~/$status/gi and $OS=~/$os_machine/gi ) {		
+
+					$t1->hr;
+					$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+				}
+
+			} elsif ( $level ne '' and $os_machine ne '' ) {
+
+				if ( $Binario_retired->{$retired}=~/$status/gi || $Binario_active->{$free}=~/$status/gi and $OS=~/$os_machine/gi and $Points_To_lvl->{$Points}=~/$level/gi ) {
+
+					$t1->hr;
+					$t1->row( "[$ID] $machine", "$IP", "$Points_To_lvl->{$Points}","$OS","$free", "$retired", "$rating", "$user_owns", "$root_owns", "$Points" );
+
+				}
+			}
+
+		}
+	}
+		print color("$COLOR"); 
+		print $t1->boxes->draw; 
+
+}
+
+sub resetMachine {
+
+	
+	foreach my $point ( $tx->result->json->@* ) {
+
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+
+
+		if ( $machine=~/$reset_machine/gi ) {
+			my $result = `curl -L -s -X POST "https://hackthebox.eu/api/vm/reset/$ID?api_token=$TOKEN"`;
+
+			my $raw = encode( 'UTF8', $result );
+			my $hash = decode_json($raw);
+	
+		if ( defined $hash->{error} and $hash->{error} eq 'Unauthorized.' ) {
+			print color('red');say "\n\tUnknown machine!"; print color('reset');
+			last;
+		}
+
+		
+		if ( !($hash->{success})  ) { ### $hash->{success} == 0 dont reset
+			
+			print color('yellow'); print "\n\t[] "; print color('reset');
+			print color('red'); say $hash->{output};
+			last;
+
+		} elsif ( $hash->{success} ) { ### $hash->{success} != 0 reset machine
+
+			print color('green'); print "\n\t[] "; print color('reset');
+			print color('yellow'); say $hash->{output};
+			last;
+
+		}
+	     }
+ 	}
+}
+
+
+sub sendFlag {
+	
+	system "tput civis";
+	foreach my $point ( $tx->result->json->@* ) {  
+		my $ID = $point->{id};
+		my $Points = $point->{points};
+		my $machine = $point->{name};
+
+		if ( $machine=~/$flag[0]/gi ) {
+			my $result = `curl -L -s -X POST "https://www.hackthebox.eu/api/machines/own" -H "User-Agent: htbSearch v1" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/x-www-form-urlencoded" -d "flag=$flag[1]&difficulty=$Points&id=$ID"`;
+			my $raw = encode( 'UTF-8', $result );
+			my $hash = decode_json($raw);
+		
+			if ( !($hash->{success}) ) {
+				print color('yellow'); print "\n\t[] ";print color('reset');
+				print color('red'); say $hash->{status};
+				last;
+
+			} elsif ( $hash->{success} ) {
+				print color('green'); print "\n\t[] ";print color('reset');
+				print color('yellow'); say $hash->{status};
+				last;
+			}		
+		}
+	}
+	
+	system "tput cnorm";
+}
+
+sub spawn_machine {
+
+	system "tput civis";
+
+	foreach my $point ( $tx->result->json->@* ) {
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+		
+		if ( $machine=~/$deploy_machine/gi ) {
+			my $result = `curl -s -L -X POST "https://hackthebox.eu/api/vm/vip/assign/$ID/?api_token=$TOKEN"`;
+			my $raw = encode('UTF-8', $result);
+			my $hash = decode_json($raw);
+
+		    if ( !($hash->{success}) ) {
+				print color('yellow'); print "\n\t[] ";print color('reset');
+				print color('red'); say $hash->{status};
+				last;
+
+			} elsif ( $hash->{success} ) {
+				print color('green'); print "\n\t[] ";print color('reset');
+				print color('yellow'); say $hash->{status};
+				last;
+			}			
+				
+			}
+
+		}
+
+	system "tput cnorm";
+
+}
+
+
+sub stop_machine {
+
+	system "tput civis";
+
+	foreach my $point ( $tx->result->json->@* ) {
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+		
+		if ( $machine=~/$stop_machine/gi ) {
+			my $result = `curl -s -L -X POST "https://hackthebox.eu/api/vm/vip/remove/$ID/?api_token=$TOKEN"`;
+			my $raw = encode('UTF-8', $result);
+			my $hash = decode_json($raw);
+
+		    if ( !($hash->{success}) ) {
+				print color('yellow'); print "\n\t[] ";print color('reset');
+				print color('red'); say $hash->{status};
+				last;
+
+			} elsif ( $hash->{success} ) {
+				print color('green'); print "\n\t[] ";print color('reset');
+				print color('yellow'); say $hash->{status};
+				last;
+			}			
+				
+			}
+
+		}
+
+	system "tput cnorm";
+
+}
+
+
+
+sub extend_machine {
+
+	system "tput civis";
+
+	foreach my $point ( $tx->result->json->@* ) {
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+		
+		if ( $machine=~/$extend_machine/gi ) {
+			my $result = `curl -s -L -X POST "https://hackthebox.eu/api/vm/vip/extend/$ID/?api_token=$TOKEN"`;
+			my $raw = encode('UTF-8', $result);
+			my $hash = decode_json($raw);
+
+		    if ( !($hash->{success}) ) {
+				print color('yellow'); print "\n\t[] ";print color('reset');
+				print color('red'); say $hash->{status};
+				last;
+
+			} elsif ( $hash->{success} ) {
+				print color('green'); print "\n\t[] ";print color('reset');
+				print color('yellow'); say $hash->{status};
+				last;
+			}			
+				
+			}
+
+		}
+
+	system "tput cnorm";
+
+}
+
+
+if ( @flag <= 0 and $reset_machine eq '' and $deploy_machine eq '' and $stop_machine eq '' and $extend_machine eq '' ) {
+
+	list_machine();
+
+} elsif ( @flag == 2) {
+
+	sendFlag();
+}
+
+
+if ( $reset_machine and @flag <= 0 ) {
+
+	resetMachine();
+}
+
+if ( $deploy_machine ) {
+
+	spawn_machine();
+
+} elsif ( $stop_machine ) {
+
+	stop_machine();
+
+} elsif ( $extend_machine ) {
+
+	extend_machine();
+
+}
+
+__END__
+ 
+=head1 NAME
+ 
+htbSearch - HackTheBox Search by spoNge369 >:D
+ 
+=head1 SYNOPSIS
+
+htbSearch [options ...]
+ 
+ Simple options:
+   -help                                    brief help message
+   -man                                     full documentation with examples :)
+   
+   -n, --name <regex>                       Search by machine name
+   -I | -i, --IP <regex>                    Search by machine IP
+   -s <regex>                               Search by active or retired machines Status
+   -c, --color <color>                      Change the color of the table (default: bold black)
+   -f, --flag <machine> <flag>              Send the flag
+   -r, --reset <machine>                    Reset a machine
+
+ Multiple options:
+   -s <regex> -d <regex>                    Search by status and difficulty
+   -s <regex> -os <regex>                   Search by status and operating system
+   -s <regex> -os <regex> -d <regex>        Search for the 3 matches 
+
+ VIP options:
+   --spawn <machine>                        Machine deploy
+   --stop <machine>                         Machine stop
+   --extend <machine>                       Machine extend time
+
+=head1 DESCRIPTION
+
+Intelligent machine search (HTB) through regular expressions >:)
+
+=head2 Examples:
+ 
+
+ htbSearch -n 'se$'                         Search for machines ending in 'se'
+ htbSearch -i '10$|20$'                     Search for machines with IPs ending in '10' or '20'
+ htbSearch -s active -d easy                Search for 'active' machines with 'easy' difficulty
+ htbSearch -s retired -d insane -os bsd     Search for 'retired' machines, 'insane' difficulty and with an operating system that has 'bsd'
+ htbSearch -f Previse l8281c9f1727319fc     Send the flag to the 'Previse' machine
+ htbSearch -r Previse                       Reset the 'Previse' machine.
+
+
+For more information: https://github.com/spoNge369
+
+=cut
