@@ -46,6 +46,8 @@ sudo cp htbSearch /usr/local/bin/
 
 - --extend name_machine<br>
 	Machine extend time (VIP)
+	
+- --owned name_machine, finish or unfinish<br> 
 
 ## Entrada de datos
 
