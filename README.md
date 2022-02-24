@@ -1,6 +1,6 @@
 
 # htbSearch - Smart box search with REGEX
-Una simple pero poderosa herramienta para buscar cajas de HTB(y mucho mas), y hacerte la vida mas amena en los CTF.
+Una simple pero poderosa herramienta para buscar cajas de HTB(y mucho mas), y hacerte la vida mas amena en los CTFs.
 
 
 ## Instalacion
