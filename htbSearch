@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # Intelligent machine search (HTB) through regular expressions -- 2021-Dec-21 spoNge369
 
 use Mojo::Base -strict; #use warnings; use strict; use utf8; use 5.10; 
@@ -9,6 +9,7 @@ use Getopt::Long;
 use Term::ANSIColor;
 use Text::SimpleTable;
 use Pod::Usage;
+use Data::Dumper;
 
 binmode(STDOUT, "encoding( UTF-8 )");
 
@@ -26,8 +27,9 @@ my $reset_machine = '';
 my $deploy_machine = '';
 my $stop_machine = '';
 my $extend_machine = '';
+my $owned_machine = '';
 
-GetOptions ( 'extend=s' => \$extend_machine, 'stop=s' => \$stop_machine, 'spawn=s' => \$deploy_machine,'reset=s' => \$reset_machine, 'c|color=s' => \$COLOR ,'man' => \$man ,'help|?' => \$help ,'flag=s{2}' => \@flag, 's=s' => \$status , 'difficulty=s' => \$level,'os=s' => \$os_machine, 'Ip=s' => \$IP_machine, 'name=s' => \$name_machine ) or pod2usage(2);
+GetOptions ( 'owned|own=s' => \$owned_machine,'extend=s' => \$extend_machine, 'stop=s' => \$stop_machine, 'spawn=s' => \$deploy_machine,'reset=s' => \$reset_machine, 'c|color=s' => \$COLOR ,'man' => \$man ,'help|?' => \$help ,'flag=s{2}' => \@flag, 's=s' => \$status , 'difficulty=s' => \$level,'os=s' => \$os_machine, 'Ip=s' => \$IP_machine, 'name=s' => \$name_machine ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-exitval => 0, -verbose => 2) if $man;
 
@@ -36,7 +38,7 @@ $COLOR = 'bold black' unless $COLOR;
 #--------------------------------------------------------------------------------------------------
 pod2usage(1) if ( $name_machine and ( $IP_machine or $os_machine or $level or $status ) );
 pod2usage(1) if ( $IP_machine and ( $name_machine or $os_machine or $level or $status ) );
-pod2usage(1) unless ( $IP_machine or $name_machine or $os_machine or $level or $status or @flag or $reset_machine or $deploy_machine or $stop_machine or $extend_machine);
+pod2usage(1) unless ( $IP_machine or $name_machine or $os_machine or $level or $status or @flag or $reset_machine or $deploy_machine or $stop_machine or $extend_machine or $owned_machine);
 #--------------------------------------------------------------------------------------------------
 
 #User-Agent
@@ -139,6 +141,75 @@ sub list_machine {
 
 }
 
+sub id_to_machine {
+	
+	my ($in) = @_;
+	foreach my $point ( $tx->result->json->@* ) {
+		
+		my $ID = $point->{id};
+		my $machine = $point->{name};
+
+		if ( $in eq $ID ) {
+
+			return $machine;
+
+		}
+
+	}
+	
+
+}
+
+sub ownedMachine {
+
+	my $t2 = Text::SimpleTable->new( 19, 13, 11 ); 
+	$t2->row( '[ID] Machines', 'Owned_user', 'Owned_root' );
+
+
+	my $result = `curl -L -s -X GET "https://www.hackthebox.eu/api/machines/owns?api_token=$TOKEN"`;
+	
+	my $raw = encode( 'UTF8', $result );
+	my $array = decode_json($raw);
+	
+	foreach my $i ( 0 .. 1000 ) {
+
+		if ( defined $array->[$i]{id} ) {
+	
+			my $machine = id_to_machine($array->[$i]{id});
+			my $owned_user = $array->[$i]{owned_user} ? 'Yes' : 'No';
+			my $owned_root = $array->[$i]{owned_root} ? 'Yes' : 'No';
+	
+	
+			if ( $machine=~/$owned_machine/gi && $owned_machine ne 'finish' && $owned_machine ne 'unfinish' )  {
+		
+				$t2->hr;
+				$t2->row( "[$array->[$i]{id}] $machine", "$owned_user", "$owned_root");
+
+
+			} elsif ( $owned_machine eq 'finish' && $owned_machine ne 'unfinish' && $owned_root eq 'Yes' ) {
+	
+				$t2->hr;
+				$t2->row( "[$array->[$i]{id}] $machine", "$owned_user", "$owned_root");
+
+
+			} elsif ( $owned_machine eq 'unfinish' && $owned_machine ne 'finish' && $owned_root eq 'No' ) {
+			
+				$t2->hr;
+				$t2->row( "[$array->[$i]{id}] $machine", "$owned_user", "$owned_root");
+
+			}
+
+
+		} else { last }
+
+			
+	}
+
+	print color("$COLOR");
+	print $t2->boxes->draw;
+		
+}
+
 sub resetMachine {
 
 	
@@ -172,8 +243,8 @@ sub resetMachine {
 			print color('yellow'); say $hash->{output};
 			last;
 
-		}
-	     }
+		 }
+	   }
  	}
 }
 
@@ -307,7 +378,7 @@ sub extend_machine {
 }
 
 
-if ( @flag <= 0 and $reset_machine eq '' and $deploy_machine eq '' and $stop_machine eq '' and $extend_machine eq '' ) {
+if ( @flag <= 0 and $reset_machine eq '' and $deploy_machine eq '' and $stop_machine eq '' and $extend_machine eq '' and $owned_machine eq '' ) {
 
 	list_machine();
 
@@ -334,6 +405,10 @@ if ( $deploy_machine ) {
 
 	extend_machine();
 
+} elsif ( $owned_machine ) {
+
+	ownedMachine();
+
 }
 
 __END__
@@ -356,6 +431,7 @@ htbSearch [options ...]
    -c, --color <color>                      Change the color of the table (default: bold black)
    -f, --flag <machine> <flag>              Send the flag
    -r, --reset <machine>                    Reset a machine
+   --owned <regex>, <finish> or <unfinish>  List owned machines by machine name(regex), (finish)ed or (unfinish)ed machines
 
  Multiple options:
    -s <regex> -d <regex>                    Search by status and difficulty
@@ -370,7 +446,7 @@ htbSearch [options ...]
 =head1 DESCRIPTION
 
 Intelligent machine search (HTB) through regular expressions >:)
-
+                          
 =head2 Examples:
  
 
@@ -380,8 +456,15 @@ Intelligent machine search (HTB) through regular expressions >:)
  htbSearch -s retired -d insane -os bsd     Search for 'retired' machines, 'insane' difficulty and with an operating system that has 'bsd'
  htbSearch -f Previse l8281c9f1727319fc     Send the flag to the 'Previse' machine
  htbSearch -r Previse                       Reset the 'Previse' machine.
+ htbSearch --spawn previse
+ htbSearch --stop previse
+ htbSearch --extend previse
+ htbSearch --owned '\w+'
+ htbSearch --owned lame
+ htbSearch --owned finish
+ htbSearch --owned unfinish
 
 
-For more information: https://github.com/spoNge369
+For more information: https://github.com/spoNge369/htbSearch
 
 =cut
