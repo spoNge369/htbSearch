@@ -9,7 +9,6 @@ use Getopt::Long;
 use Term::ANSIColor;
 use Text::SimpleTable;
 use Pod::Usage;
-use Data::Dumper;
 
 binmode(STDOUT, "encoding( UTF-8 )");
 
@@ -38,6 +37,7 @@ $COLOR = 'bold black' unless $COLOR;
 #--------------------------------------------------------------------------------------------------
 pod2usage(1) if ( $name_machine and ( $IP_machine or $os_machine or $level or $status ) );
 pod2usage(1) if ( $IP_machine and ( $name_machine or $os_machine or $level or $status ) );
+pod2usage(1) if ( ( $os_machine or $level ) and ( $status eq '' and $IP_machine eq '' and $name_machine eq '') );
 pod2usage(1) unless ( $IP_machine or $name_machine or $os_machine or $level or $status or @flag or $reset_machine or $deploy_machine or $stop_machine or $extend_machine or $owned_machine);
 #--------------------------------------------------------------------------------------------------
 
