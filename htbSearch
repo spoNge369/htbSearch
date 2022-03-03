@@ -57,8 +57,8 @@ unless ( $tx->result->is_success ) { die "There was a problem\n" }
 
 
 sub list_machine {
-
-	my $t1 = Text::SimpleTable->new( 19,13,10,10,10,10,10,10,10,10 ); 
+	
+	my $t1 = Text::SimpleTable->new( 19,13,10,8,7,7,7,9,9,6 ); 
 	$t1->row( '[ID] Machines', 'IP', 'Difficulty', 'OS', 'Free', 'Retired', 'Rating', 'User owns', 'Root owns', 'Points' );
 
 	foreach my $point ( $tx->result->json->@* ) { 
