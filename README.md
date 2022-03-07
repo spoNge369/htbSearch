@@ -11,7 +11,7 @@ sudo cpan Mojo Cpanel::JSON:XS Getopt::Long Text::SimpleTable
 cd
 git clone https://github.com/sponge369/htbSearch
 cd htbSearch/
-perl -i.bak -wplE's/my \$TOKEN = "";/my \$TOKEN = "<ADD-HERE-TOKEN>";/g' htbSearch     #add TOKEN: API KEY Classic HacktheBox
+perl -i.bak -wplE's/my \$TOKEN = "";/my \$TOKEN = "ADD-HERE-TOKEN";/g' htbSearch     #add TOKEN: API KEY Classic HacktheBox
 sudo cp htbSearch /usr/local/bin/
 
 ```
