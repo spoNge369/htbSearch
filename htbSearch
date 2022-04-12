@@ -1,11 +1,11 @@
 #!/usr/bin/perl
+# Intelligent machine search (HTB) through regular expressions -- 2021-Dec-21 spoNge369
+
 
 #          Copyright spoNge369 2021.
 # Distributed under the Boost Software License, Version 1.0.
 #    (See accompanying file https://github.com/spoNge369/htbSearch/blob/main/LICENSE or copy at
 #          https://www.boost.org/LICENSE_1_0.txt)
-
-# Intelligent machine search (HTB) through regular expressions -- 2021-Dec-21 spoNge369
 
 
 use Mojo::Base -strict; #use warnings; use strict; use utf8; use 5.10; 
