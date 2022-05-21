@@ -258,7 +258,6 @@ sub resetMachine {
 
 sub sendFlag {
 	
-	system "tput civis";
 	foreach my $point ( $tx->result->json->@* ) {  
 		my $ID = $point->{id};
 		my $Points = $point->{points};
@@ -282,12 +281,9 @@ sub sendFlag {
 		}
 	}
 	
-	system "tput cnorm";
 }
 
 sub spawn_machine {
-
-	system "tput civis";
 
 	foreach my $point ( $tx->result->json->@* ) {
 		my $ID = $point->{id};
@@ -313,14 +309,10 @@ sub spawn_machine {
 
 		}
 
-	system "tput cnorm";
-
 }
 
 
 sub stop_machine {
-
-	system "tput civis";
 
 	foreach my $point ( $tx->result->json->@* ) {
 		my $ID = $point->{id};
@@ -346,15 +338,11 @@ sub stop_machine {
 
 		}
 
-	system "tput cnorm";
-
 }
 
 
 
 sub extend_machine {
-
-	system "tput civis";
 
 	foreach my $point ( $tx->result->json->@* ) {
 		my $ID = $point->{id};
@@ -379,8 +367,6 @@ sub extend_machine {
 			}
 
 		}
-
-	system "tput cnorm";
 
 }
 
