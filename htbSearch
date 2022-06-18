@@ -421,10 +421,10 @@ htbSearch [options ...]
    -n, --name <regex>                       Search by machine name
    -I | -i, --IP <regex>                    Search by machine IP
    -s <regex>                               Search by active or retired machines Status
-   -c, --color <color>                      Change the color of the table (default: bold black)
-   -f, --flag <machine> <flag>              Send the flag
-   -r, --reset <machine>                    Reset a machine
-   --owned <regex>, <finish> or <unfinish>  List owned machines by machine name(regex), (finish)ed or (unfinish)ed machines
+   -c, -color <color>                       Change the color of the table (default: bold black)
+   -f, -flag <machine> <flag>               Send the flag
+   -r, -reset <machine>                     Reset a machine
+   -owned <regex>, <finish> or <unfinish>   List owned machines by machine name(regex), (finish)ed or (unfinish)ed machines
 
  Multiple options:
    -s <regex> -d <regex>                    Search by status and difficulty
@@ -432,9 +432,9 @@ htbSearch [options ...]
    -s <regex> -os <regex> -d <regex>        Search for the 3 matches 
 
  VIP options:
-   --spawn <machine>                        Machine deploy
-   --stop <machine>                         Machine stop
-   --extend <machine>                       Machine extend time
+   -spawn <machine>                         Machine deploy
+   -stop <machine>                          Machine stop
+   -extend <machine>                        Machine extend time
 
 =head1 DESCRIPTION
 
@@ -449,13 +449,13 @@ Intelligent machine search (HTB) through regular expressions >:)
  htbSearch -s retired -d insane -os bsd     Search for 'retired' machines, 'insane' difficulty and with an operating system that has 'bsd'
  htbSearch -f Previse l8281c9f1727319fc     Send the flag to the 'Previse' machine
  htbSearch -r Previse                       Reset the 'Previse' machine.
- htbSearch --spawn previse
- htbSearch --stop previse
- htbSearch --extend previse
- htbSearch --owned '\w+'
- htbSearch --owned lame
- htbSearch --owned finish
- htbSearch --owned unfinish
+ htbSearch -spawn previse
+ htbSearch -stop previse
+ htbSearch -extend previse
+ htbSearch -owned '\w+'
+ htbSearch -owned lame
+ htbSearch -owned finish
+ htbSearch -owned unfinish
 
 
 For more information: https://github.com/spoNge369/htbSearch
