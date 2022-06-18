@@ -54,7 +54,7 @@ $ua->transactor->name( 'htbSearch v1' );
 
 # Variables globales
 my $TOKEN = ""; #token old HTB
-$TOKEN eq '' and die 'add TOKEN in the code: my $TOKEN = "<ADD-HERE-TOKEN>" ';
+$TOKEN eq '' and die 'add TOKEN in the code: my $TOKEN = "ADD-HERE-TOKEN-old-HTB" ';
 
 my $url = "https://hackthebox.eu/api/machines/get/all?api_token=$TOKEN";
 my $tx = $ua->get( $url ); #GET request
